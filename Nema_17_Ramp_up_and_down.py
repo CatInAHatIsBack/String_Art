@@ -11,7 +11,7 @@ dir_pin = Pin(DIR_PIN, Pin.OUT)
 
 # Function to rotate the motor with configurable parameters
 def rotate_motor(num_steps, rotation_direction=1, acc_steps=1000, min_speed = 1500, max_speed=300, total_steps=10000):
-
+    res = []
     # Set the direction
     dir_pin.value(rotation_direction)
 
@@ -29,7 +29,7 @@ def rotate_motor(num_steps, rotation_direction=1, acc_steps=1000, min_speed = 15
     while speed > max_speed and steps < acc_steps:
         steps += 1
         speed = speed - (min_speed - max_speed) / acc_steps
-        print(speed)
+        res.append(speed)
         step_pin.value(0)
         step_pin.value(1)
         time.sleep_us(int(speed))
@@ -46,21 +46,23 @@ def rotate_motor(num_steps, rotation_direction=1, acc_steps=1000, min_speed = 15
         
 
     # Deceleration
-    while speed > min_speed and steps < total_steps:
+    while speed < min_speed and steps < total_steps:
         steps += 1
         speed = speed + (min_speed - max_speed) / acc_steps
-        print(speed)
+        res.append(speed)
         step_pin.value(0)
         step_pin.value(1)
         time.sleep_us(int(speed))
+    return res
     
 # Set the number of steps and direction for rotation
 num_steps = 9000  # Adjust this value based on your motor's specifications and your application
 rotation_direction = 1  # 1 for clockwise, 0 for counterclockwise
 
 # Rotate the motor with configurable parameters
-rotate_motor(num_steps, rotation_direction,  acc_steps=1000, min_speed = 1500, max_speed=300, total_steps=10000)
-
+res = rotate_motor(num_steps, rotation_direction,  acc_steps=1000, min_speed = 3000, max_speed=600, total_steps=10000)
+print(res)
 # Cleanup GPIO
 step_pin.value(0)
 dir_pin.value(0)
+

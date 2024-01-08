@@ -36,29 +36,18 @@ def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
             #print(3)
             #print(vmax, s, s_2, acc)
             sx = s - s_2
-            vm2 = vmax * vmax
-            sax = 2*sx*acc
             #print(sx)
-            #print(f"vm2 = {vm2} - sax = {sax}")
-            try:
-                vcurr = math.sqrt(vm2 - sax)
-            except:
-                print(vcurr)
-        
-        #print(f"step = {step_angle}, vcurr = {vcurr}")
-        #print(f"step/vcurr = {step_angle / vcurr}")
+            vcurr = math.sqrt(vmax * vmax - 2 * (sx) * acc)
+            #print(4)
+
         # Convert velocity to delay
-        if vcurr > 0:
-            tDelay = round(step_angle / vcurr * 1e6)  # in microseconds
-        else:
-            tDelay = round(step_angle / vmax * 1e6)
-        
-            
+        tDelay = round(step_angle / vcurr * 1e6)  # in microseconds
+
         delays.append(tDelay)
     end = time.ticks_ms()
     time_diff = (end - start)
 
-    #print(end - start)
+    print(end - start)
     return delays
 
 
@@ -150,7 +139,7 @@ def get_dir_and_amount(left_value,right_value):
 
     
     
-def control(inp_nails):
+def control(nails, direction=1):
     
     # Example usage
     tot_nails = 300
@@ -163,74 +152,67 @@ def control(inp_nails):
     # steps = steps_nail * nails
     # deltaS_degrees = step_angle * steps
 
-    for left_value,right_value in inp_nails:
-        
-        rotation_direction, nails = get_dir_and_amount(left_value,right_value)
-        print(rotation_direction, nails, left_value, right_value)
-        half = math.ceil(steps_nail/2)
-        #print(half)
-        total_steps = steps_nail * nails - half # - half to get to the middle of the nail
-        deltaS_degrees = step_angle * total_steps # total steps to degrees
-        
-        #print(left_value,right_value) 
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, rotation_direction)
-        ######## Hoook out ########
-        
-        deltaS_degrees = steps_nail 
-        
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, rotation_direction)
-        # ######## Hook in ########
-        
-        deltaS_degrees = half 
-        
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, 0 if rotation_direction else 1)
+#     for left_value,right_value in inp_nails:
+# 
+#         rotation_direction, nails = get_dir_and_amount(left_value,right_value)  
+#         half = int(steps_nail/2) 
+#         total_steps = steps_nail * nails - half # - half to get to the middle of the nail
+#         deltaS_degrees = step_angle * total_steps # total steps to degrees
+#         
+#         print(left_value,right_value) 
+#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         res = rotate_motor(delays, rotation_direction)
+#         ######## Hoook out ########
+#         
+#         deltaS_degrees = steps_nail 
+#         
+#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         res = rotate_motor(delays, rotation_direction)
+#         ######## Hook in ########
+#         
+#         deltaS_degrees = half 
+#         
+#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         res = rotate_motor(delays, 0 if rotation_direction else 1)
         
         
 
     
-    # for i in range(10):
-    #     if i % 2 == 0:
-    #         rotation_direction = 1
-    #     else:
-    #         rotation_direction = 0
-            
-    #     steps = steps_nail * nails / (i + 1)
-    #     deltaS_degrees = step_angle * steps
-        
-    #     delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-    #     res = rotate_motor(delays, rotation_direction)
+#     for i in range(10):
+#         if i % 2 == 0:
+#             rotation_direction = 1
+#         else:
+#
+    rotation_direction = direction 
+    steps = steps_nail * nails #(i + 1)
+    deltaS_degrees = step_angle * steps
+
+    delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+    res = rotate_motor(delays, rotation_direction)
 
 
 
 
 
 
-inp_nails = [(0, 291), (291, 178), (178, 290), (290, 175), (175, 288), (288, 171), (171, 284), (284, 5), (5, 185), (185, 90), (90, 282), (282, 165), (165, 285), (285, 166), (166, 287), (287, 165), (165, 283), (283, 163), (163, 285), (285, 167), (167, 281), (281, 160), (160, 282), (282, 166), (166, 281), (281, 161)]
-#inp_nails = [(0, 170), (170, 270), (270, 90), (270, 45)]
+#inp_nails = [(0, 291), (291, 178), (178, 290), (290, 175), (175, 288), (288, 171), (171, 284), (284, 166), (166, 283), (283, 167), (167, 282), (282, 165), (165, 285), (285, 166), (166, 287), (287, 165), (165, 283), (283, 163), (163, 285), (285, 167), (167, 281), (281, 160), (160, 282), (282, 166), (166, 281), (281, 161)]
 
-# Example usage
-gr = 2.8125
-tot_nails = 300
-tot_steps = 1600 * gr
-step_angle = 360/tot_steps  # step angle in degrees
-vmax = 60 * gr  # maximum velocity in degrees/s
-acc = 300 * gr  # acceleration in degrees/(s*s)
-steps_nail = tot_steps / tot_nails # steps per nail
-# steps = steps_nail * nails
-# deltaS_degrees = step_angle * steps
-    
-control(inp_nails)
-#for i in range():
-    #try:
-#deltaS_degrees = 11
-#delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-#res = rotate_motor(delays, rotation_direction)
-    #except:
-        #print(i)
-        #print("An exception occurred")
+control(291,1)
+control(178,0)
+control(290,1)
+control(175,0)
+control(288,1)
+control(171,0)
+control(284,1)
+control(166,0)
+control(283,1)
+control(167,0)
+control(282,1)
+control(165,0)
+control(285,1)
+control(166,0)
+control(287,1)
+control(165,0)
 
 # Cleanup GPIO
 step_pin.value(0)

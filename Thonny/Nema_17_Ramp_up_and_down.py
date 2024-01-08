@@ -1,6 +1,7 @@
 import math
 import time
-
+from machine import Pin, PWM
+import utime
 
 def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     delays = []
@@ -176,13 +177,13 @@ def control(inp_nails):
         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
         res = rotate_motor(delays, rotation_direction)
         ######## Hoook out ########
-        
+        hooker(0)
         deltaS_degrees = steps_nail 
         
         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
         res = rotate_motor(delays, rotation_direction)
         # ######## Hook in ########
-        
+        hooker(1)
         deltaS_degrees = half 
         
         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
@@ -205,7 +206,28 @@ def control(inp_nails):
 
 
 
+def hooker(io):
+    # Set the GPIO pin for the servo
+    servo_pin = 4
+    servo_pwm = PWM(Pin(servo_pin))
 
+    # Set the PWM frequency (Hz) and duty cycle range (0-65535)
+    pwm_freq = 50  # Hz
+    pwm_min_range = 2700  
+    pwm_max_range = 3500
+
+    # Set up PWM on the servo pin
+    servo_pwm.freq(pwm_freq)
+    if io == 0:
+        # Move from 0% to 100%
+        for duty_cycle in range(pwm_max_range, pwm_min_range -1, -50):  # Adjust step size if needed
+            servo_pwm.duty_u16(duty_cycle)
+            utime.sleep_ms(20)  # Adjust this delay if needed
+    else:
+        # Move from 100% to 0%
+        for duty_cycle in range(pwm_min_range, pwm_max_range+1, 50):  # Adjust step size if needed
+            servo_pwm.duty_u16(duty_cycle)
+            utime.sleep_ms(20)  # Adjust this delay if needed
 
 
 inp_nails = [(0, 291), (291, 178), (178, 290), (290, 175), (175, 288), (288, 171), (171, 284), (284, 5), (5, 185), (185, 90), (90, 282), (282, 165), (165, 285), (285, 166), (166, 287), (287, 165), (165, 283), (283, 163), (163, 285), (285, 167), (167, 281), (281, 160), (160, 282), (282, 166), (166, 281), (281, 161)]
@@ -235,4 +257,5 @@ control(inp_nails)
 # Cleanup GPIO
 step_pin.value(0)
 dir_pin.value(0)
+
 

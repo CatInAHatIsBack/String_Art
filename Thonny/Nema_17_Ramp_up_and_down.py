@@ -2,7 +2,7 @@ import math
 import time
 
 
-def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees, fallAndRise, total_steps):
+def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     delays = []
     start = time.ticks_ms()
 
@@ -39,21 +39,22 @@ def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees, fallAndRise, t
     time_diff = (end - start)
 
     print(end - start)
-    print(end, start)
     return delays
 
 
 # Example usage
-step_angle = 360/1600  # step angle in degrees
-vmax = 1600  # maximum velocity in degrees/s
-acc = 1000   # acceleration in degrees/(s*s)
-deltaS_degrees = 360*10
-# total degrees of rotation
-fallAndRise = True
-total_steps = 1000
+tot_nails = 300
+tot_steps = 4500
+nails=300
 
+step_angle = 360/tot_steps  # step angle in degrees
+vmax = 1012.5  # maximum velocity in degrees/s
+acc = 1012.5   # acceleration in degrees/(s*s)
+steps_nail = tot_steps / tot_nails
+steps = steps_nail * nails
+deltaS_degrees = step_angle * steps
 
-delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees, fallAndRise, total_steps)
+delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
 
 
 from machine import Pin
@@ -69,23 +70,13 @@ dir_pin = Pin(DIR_PIN, Pin.OUT)
 
 # Function to rotate the motor with configurable parameters
 def rotate_motor(num_steps, rotation_direction=1, acc_steps=1000, min_speed = 1500, max_speed=300, total_steps=2500):
-    # res = []
     # Set the direction
     dir_pin.value(rotation_direction)
 
     ## check for off by one if total steps < acc_steps * 2 and total steps is odd
     res = 0
-    # uninteruppted_acceleration = True
-    # if total_steps < acc_steps * 2:
-    #     uninteruppted_acceleration = False 
-    #     acc_steps = total_steps / 2
-
-    steps = 0
-    # speed = min_speed
     # Acceleration
     for i in range(len(delays)):
-    
-        # steps += 1
         
         # res.append(speed)
         step_pin.value(0)
@@ -101,9 +92,8 @@ rotation_direction = 1  # 1 for clockwise, 0 for counterclockwise
 # Rotate the motor with configurable parameters
 res = rotate_motor(num_steps, rotation_direction,  acc_steps=1000, min_speed = 3000, max_speed=600, total_steps=10000)
 print(res)
-# with open('time_output.txt', 'w') as f:
-#     for item in res:
-#         f.write("%s\n" % item)
+
+
 
 # Cleanup GPIO
 step_pin.value(0)

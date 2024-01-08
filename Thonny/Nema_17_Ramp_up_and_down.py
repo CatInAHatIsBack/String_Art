@@ -54,7 +54,7 @@ steps_nail = tot_steps / tot_nails
 steps = steps_nail * nails
 deltaS_degrees = step_angle * steps
 
-delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+# delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
 
 
 from machine import Pin
@@ -69,7 +69,7 @@ step_pin = Pin(STEP_PIN, Pin.OUT)
 dir_pin = Pin(DIR_PIN, Pin.OUT)
 
 # Function to rotate the motor with configurable parameters
-def rotate_motor(num_steps, rotation_direction=1, acc_steps=1000, min_speed = 1500, max_speed=300, total_steps=2500):
+def rotate_motor(delays, rotation_direction=1):
     # Set the direction
     dir_pin.value(rotation_direction)
 
@@ -90,10 +90,36 @@ num_steps = 9000  # Adjust this value based on your motor's specifications and y
 rotation_direction = 1  # 1 for clockwise, 0 for counterclockwise
 
 # Rotate the motor with configurable parameters
-res = rotate_motor(num_steps, rotation_direction,  acc_steps=1000, min_speed = 3000, max_speed=600, total_steps=10000)
-print(res)
+# res = rotate_motor(num_steps, rotation_direction,  acc_steps=1000, min_speed = 3000, max_speed=600, total_steps=10000)
+# print(res)
 
 
+def controll(nails=300, dir=1):
+    
+    # Example usage
+    tot_nails = 300
+    tot_steps = 4500
+    nails=300
+
+    step_angle = 360/tot_steps  # step angle in degrees
+    vmax = 1012.5  # maximum velocity in degrees/s
+    acc = 1012.5   # acceleration in degrees/(s*s)
+    steps_nail = tot_steps / tot_nails
+    # steps = steps_nail * nails
+    # deltaS_degrees = step_angle * steps
+
+    for i in range(10):
+        if i % 2 == 0:
+            rotation_direction = 1
+        else:
+            rotation_direction = 0
+            
+        steps = steps_nail * nails / i
+        
+        deltaS_degrees = step_angle * steps
+        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+        res = rotate_motor(delays, rotation_direction, delays)
+        time.sleep(1)
 
 # Cleanup GPIO
 step_pin.value(0)

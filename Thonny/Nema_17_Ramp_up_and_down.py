@@ -3,6 +3,8 @@ import time
 from machine import Pin, PWM
 import utime
 
+
+###### https://hofmannu.org/2022/01/06/trap-vel-stepper-motor/ ######
 def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     delays = []
     start = time.ticks_ms()

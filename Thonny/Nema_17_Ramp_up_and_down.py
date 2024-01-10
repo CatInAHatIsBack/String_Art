@@ -184,7 +184,7 @@ def control(inp_nails):
         res = rotate_motor(delays, rotation_direction)
         # ######## Hook in ########
         hooker(1)
-        deltaS_degrees = half 
+        deltaS_degrees = steps_nail - half 
         
         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
         res = rotate_motor(delays, 0 if rotation_direction else 1)
@@ -238,7 +238,7 @@ gr = 2.8125
 tot_nails = 300
 tot_steps = 1600 * gr
 step_angle = 360/tot_steps  # step angle in degrees
-vmax = 60 * gr  # maximum velocity in degrees/s
+vmax = 360 * gr  # maximum velocity in degrees/s
 acc = 300 * gr  # acceleration in degrees/(s*s)
 steps_nail = tot_steps / tot_nails # steps per nail
 # steps = steps_nail * nails

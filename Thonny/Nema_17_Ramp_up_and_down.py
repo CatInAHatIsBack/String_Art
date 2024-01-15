@@ -3,7 +3,7 @@ import time
 from machine import Pin, PWM
 import utime
 
-# Define the pin numbers for the TB6600 driver
+# Define the pin numbers for the TB6600 drivers
 STEP_PIN = 2
 DIR_PIN = 3
 DRILL_TOWER_STEP = 5
@@ -12,26 +12,45 @@ DRILL_TOWER_DIR = 6
 # Set up the motor control pins
 step_pin = Pin(STEP_PIN, Pin.OUT)
 dir_pin = Pin(DIR_PIN, Pin.OUT)
-drilltower_step_pin = Pin(DRILL_TOWER_STEP, Pin.OUT)
-drilltower_dir_pin = Pin(DRILL_TOWER_DIR, Pin.OUT)
+dt_step_pin = Pin(DRILL_TOWER_STEP, Pin.OUT)
+dt_dir_pin = Pin(DRILL_TOWER_DIR, Pin.OUT)
 
-# Setup 
-tot_nails = 300
-tot_steps = 4500
-step_per_nail =tot_steps/tot_nails
-nails=300
-lenght=5
-drilltower_step_time_ms=300
 
-step_angle = 360/tot_steps  # step angle in degrees
-vmax = 360  # maximum velocity in degrees/s
-acc = 360   # acceleration in degrees/(s*s)
-steps_nail = tot_steps / tot_nails
-steps = steps_nail * nails
-deltaS_degrees = step_angle * steps
-drilltower_deltaS_degrees=step_angle * step_per_nail
-drill_deltaS_degrees=step_angle * step_per_nail
 
+
+
+# Setup rotary board
+rb_tot_nails = 300
+rb_tot_steps_per_rev = 4500
+rb_nails=300
+step_per_nail =rb_tot_steps_per_rev/rb_tot_nails
+
+rb_step_angle = 360/rb_tot_steps_per_rev  # step angle in degrees
+rb_vmax = 360  # maximum velocity in degrees/s
+rb_acc = 360   # rb_acceleration in degrees/(s*s)
+rb_steps_nail = rb_tot_steps_per_rev / rb_tot_nails
+rb_nailsteps = rb_steps_nail * rb_nails
+rb_deltaS_degrees = rb_step_angle * rb_nailsteps
+rb_deltaS_degrees_one_nail = rb_step_angle * step_per_nail
+
+
+
+
+
+#Setup Drilltower
+dt_tot_steps_per_rev = 1600
+dt_lenght = 8
+dt_gr = 1 # 16/20
+dt_threading = 1.5
+dt_pausetime_ms = 1
+dt_deltaS_degrees = rb_step_angle * step_per_nail
+
+dt_step_angle = 360/dt_tot_steps_per_rev  # step angle in degrees
+dt_vmax = 360  # maximum velocity in degrees/s
+dt_acc = 360   # rb_acceleration in degrees/(s*s)
+dt_steps = round(dt_lenght * dt_tot_steps_per_rev * dt_gr / dt_threading)
+print(dt_steps)
+dt_deltaS_degrees = dt_step_angle * dt_steps
 
 
 
@@ -44,7 +63,7 @@ def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     # Calculate the number of steps based on the degrees of rotation
     absSteps = round(abs(deltaS_degrees) / step_angle)
 
-    # Define end point of acceleration and start point of deceleration
+    # Define end point of rb_acceleration and start point of deceleration
     s_1 = vmax * vmax / (2 * acc)
     s_2 = deltaS_degrees - s_1
 
@@ -106,32 +125,30 @@ def rotate_motor(delays, rotation_direction=1):
 
 
 # Function to rotate the motor with configurable parameters
-def rotate_drilltower(time_ms, step_angle, vmax, acc, deltaS_degrees):
+def drive_drilltower(dt_delays, pausetime_ms):
     # Set the direction
-    drilltower_dir_pin.value(0)
+    dt_dir_pin.value(0)
 
-    for i in range(len(drilltower_delays)):
-        drilltower_step_pin.value(0)
-        drilltower_step_pin.value(1)
-        time.sleep_us(int(drilltower_delays[i]))
+    for i in range(len(dt_delays)):
+        dt_step_pin.value(0)
+        dt_step_pin.value(1)
+        time.sleep_us(int(dt_delays[i]))
     
-    time.sleep_ms(time_ms)
+    time.sleep_ms(pausetime_ms)
     
-    drilltower_dir_pin.value(1)
+    dt_dir_pin.value(1)
     
-    for i in range(len(drilltower_delays)):
-        drilltower_step_pin.value(0)
-        drilltower_step_pin.value(1)
-        time.sleep_us(int(drilltower_delays[i]))
-
-    delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-    rotate_motor(delays, 1)
+    for i in range(len(dt_delays)):
+        dt_step_pin.value(0)
+        dt_step_pin.value(1)
+        time.sleep_us(int(dt_delays[i]))
 
 
 
 
 
-def get_dir_and_amount(tot_nails, left_value,right_value):
+
+def get_dir_and_amount(rb_tot_nails, left_value,right_value):
 
     closest_directions_updated = []
     x = []
@@ -140,13 +157,13 @@ def get_dir_and_amount(tot_nails, left_value,right_value):
     if left_value >= right_value:
         distance_left = left_value - right_value
     else:
-        distance_left = left_value + (tot_nails - right_value)
+        distance_left = left_value + (rb_tot_nails - right_value)
 
     # Calculate the distance going right
     if right_value >= left_value:
         distance_right = right_value - left_value
     else:
-        distance_right = (tot_nails - left_value) + right_value
+        distance_right = (rb_tot_nails - left_value) + right_value
 
     # Determine the closest direction
     # closest_direction = "left" if distance_left < distance_right else "right"
@@ -163,67 +180,74 @@ def get_dir_and_amount(tot_nails, left_value,right_value):
 def control(inp_nails):
     
     # Example usage
-    tot_nails = 300
-    tot_steps = 4500
+    rb_tot_nails = 300
+    rb_tot_steps_per_rev = 4500
     gr = 2.8125
-    step_angle = 360/tot_steps  # step angle in degrees
-    vmax = 360 * gr  # maximum velocity in degrees/s
-    acc = 360 * gr  # acceleration in degrees/(s*s)
-    steps_nail = tot_steps / tot_nails # steps per nail
-    # steps = steps_nail * nails
-    # deltaS_degrees = step_angle * steps
+    rb_step_angle = 360/rb_tot_steps_per_rev  # step angle in degrees
+    rb_vmax = 360 * gr  # maximum velocity in degrees/s
+    rb_acc = 360 * gr  # rb_acceleration in degrees/(s*s)
+    rb_steps_nail = rb_tot_steps_per_rev / rb_tot_nails # steps per nail
+    # steps = rb_steps_nail * rb_nails
+    # rb_deltaS_degrees = rb_step_angle * steps
 
     for left_value,right_value in inp_nails:
         
-        rotation_direction, nails = get_dir_and_amount(tot_nails,left_value,right_value)
-        print(rotation_direction, nails, left_value, right_value)
-        half = math.ceil(steps_nail/2)
+        rotation_direction, rb_nails = get_dir_and_amount(rb_tot_nails,left_value,right_value)
+        print(rotation_direction, rb_nails, left_value, right_value)
+        half = math.ceil(rb_steps_nail/2)
         #print(half)
-        total_steps = steps_nail * nails - half # - half to get to the middle of the nail
-        deltaS_degrees = step_angle * total_steps # total steps to degrees
+        total_steps = rb_steps_nail * rb_nails - half # - half to get to the middle of the nail
+        rb_deltaS_degrees = rb_step_angle * total_steps # total steps to degrees
         
         #print(left_value,right_value) 
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, rotation_direction)
+        rb_delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
+        res = rotate_motor(rb_delays, rotation_direction)
         ######## Hoook out ########
         hooker(0)
-        deltaS_degrees = steps_nail 
+        rb_deltaS_degrees = rb_steps_nail 
         
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, rotation_direction)
+        rb_delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
+        res = rotate_motor(rb_delays, rotation_direction)
         # ######## Hook in ########
         hooker(1)
-        deltaS_degrees = half 
+        rb_deltaS_degrees = half 
         
-        delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-        res = rotate_motor(delays, 0 if rotation_direction else 1)
+        rb_delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
+        res = rotate_motor(rb_delays, 0 if rotation_direction else 1)
         
         
-# def control(inp_nails,total_nails, steps_nail):
+# def control(inp_nails,total_nails, rb_steps_nail):
 # 
 #     for left_value,right_value in inp_nails:
 #         
-#         rotation_direction, nails = get_dir_and_amount(total_nails,left_value,right_value)
-#         half = math.ceil(steps_nail/2)
-#         total_steps = steps_nail * nails - half # - half to get to the middle of the nail
-#         deltaS_degrees = step_angle * total_steps # total steps to degrees
+#         rotation_direction, rb_nails = get_dir_and_amount(total_nails,left_value,right_value)
+#         half = math.ceil(rb_steps_nail/2)
+#         total_steps = rb_steps_nail * rb_nails - half # - half to get to the middle of the nail
+#         rb_deltaS_degrees = rb_step_angle * total_steps # total steps to degrees
 #         
-#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
 #         rotate_motor(delays, rotation_direction)
 #         ######## Hoook out ########
 #         hooker(0)
-#         deltaS_degrees = steps_nail 
+#         rb_deltaS_degrees = rb_steps_nail 
 #         
-#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
 #         rotate_motor(delays, rotation_direction)
 #         # ######## Hook in ########
 #         hooker(1)
-#         deltaS_degrees = half 
+#         rb_deltaS_degrees = half 
 #         
-#         delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+#         delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
 #         rotate_motor(delays, 0 if rotation_direction else 1)
-        
-        
+
+def hole_control():
+    dt_delays = simulate_stepper_motor(dt_step_angle, dt_vmax, dt_acc, dt_deltaS_degrees)
+    drive_drilltower(dt_delays, dt_pausetime_ms)
+    
+    rb_delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees_one_nail)
+    res = rotate_motor(rb_delays, 1)
+
+
 
 
 
@@ -254,10 +278,9 @@ def hooker(io):
 inp_nails = [(0, 291), (291, 178), (178, 290), (290, 175), (175, 288), (288, 171), (171, 284), (284, 5), (5, 185), (185, 90), (90, 282), (282, 165), (165, 285), (285, 166), (166, 287), (287, 165), (165, 283), (283, 163), (163, 285), (285, 167), (167, 281), (281, 160), (160, 282), (282, 166), (166, 281), (281, 161)]
 
 #control(inp_nails)
-
-drilltower_delays = simulate_stepper_motor(step_angle, vmax, acc, drill_deltaS_degrees)
-for i in range(5):
-    rotate_drilltower(drilltower_step_time_ms, step_angle, vmax, acc, drilltower_deltaS_degrees)
+for i in range(rb_tot_nails):
+    hole_control()
+    print(i)
 
 # Cleanup GPIO
 step_pin.value(0)

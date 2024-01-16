@@ -32,10 +32,12 @@ deltaS_degrees = step_angle * steps
 drilltower_deltaS_degrees=step_angle * step_per_nail
 drill_deltaS_degrees=step_angle * step_per_nail
 
+move_one = []
 
 
 
 
+    
 def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     delays = []
     start = time.ticks_ms()
@@ -86,7 +88,12 @@ def simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees):
     time_diff = (end - start)
     return delays
 
-
+def calculate_one():
+    deltaS_degrees = steps_nail 
+        
+    move_one = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
+    return move_one
+move_one = calculate_one()
 
 
 
@@ -106,28 +113,23 @@ def rotate_motor(delays, rotation_direction=1):
 
 
 # Function to rotate the motor with configurable parameters
-def rotate_drilltower(time_ms, step_angle, vmax, acc, deltaS_degrees):
+def rotate_drilltower(dt_delays, time_ms=1000):
     # Set the direction
-    drilltower_dir_pin.value(0)
-
-    for i in range(len(drilltower_delays)):
-        drilltower_step_pin.value(0)
-        drilltower_step_pin.value(1)
-        time.sleep_us(int(drilltower_delays[i]))
-    
+    dir_pin.value(1) 
+    move_dt(0, dt_delays)
     time.sleep_ms(time_ms)
+    move_dt(1, dt_delays)
+        
+    rotate_motor(move_one, 1)
     
-    drilltower_dir_pin.value(1)
-    
+
+
+def move_dt(pin_val, drilltower_delays):
+    drilltower_dir_pin.value(pin_val)
     for i in range(len(drilltower_delays)):
-        drilltower_step_pin.value(0)
-        drilltower_step_pin.value(1)
-        time.sleep_us(int(drilltower_delays[i]))
-
-    delays = simulate_stepper_motor(step_angle, vmax, acc, deltaS_degrees)
-    rotate_motor(delays, 1)
-
-
+            drilltower_step_pin.value(0)
+            drilltower_step_pin.value(1)
+            time.sleep_us(int(drilltower_delays[i]))
 
 
 
@@ -255,9 +257,20 @@ inp_nails = [(0, 291), (291, 178), (178, 290), (290, 175), (175, 288), (288, 171
 
 #control(inp_nails)
 
-drilltower_delays = simulate_stepper_motor(step_angle, vmax, acc, drill_deltaS_degrees)
+
+mov_per_rot = 1.5
+rot_steps = 200 
+num_rot = 3
+total_move = rot_steps * mov_per_rot * num_rot
+
+step_angle = 360/rot_steps  # step angle in degrees
+vmax = 360  # maximum velocity in degrees/s
+acc = 360   # acceleration in degrees/(s*s)
+steps_move = tot_steps / tot_nails
+
+drilltower_delays = simulate_stepper_motor(step_angle, vmax, acc, total_move)
 for i in range(5):
-    rotate_drilltower(drilltower_step_time_ms, step_angle, vmax, acc, drilltower_deltaS_degrees)
+    rotate_drilltower(drilltower_delays)
 
 # Cleanup GPIO
 step_pin.value(0)

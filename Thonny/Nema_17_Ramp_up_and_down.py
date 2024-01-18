@@ -210,6 +210,7 @@ def control(inp_nails):
         res = rotate_motor(rb_delays, rotation_direction)
         # ######## Hook in ########
         hooker(1)
+        
         rb_deltaS_degrees = half 
         
         rb_delays = simulate_stepper_motor(rb_step_angle, rb_vmax, rb_acc, rb_deltaS_degrees)
